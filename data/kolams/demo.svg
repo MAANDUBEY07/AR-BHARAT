@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="-20 -20 240 240">
+<g id="grid">
+<circle cx="0" cy="0" r="2" fill="#666" />
+<circle cx="40" cy="0" r="2" fill="#666" />
+<circle cx="80" cy="0" r="2" fill="#666" />
+<circle cx="120" cy="0" r="2" fill="#666" />
+<circle cx="160" cy="0" r="2" fill="#666" />
+<circle cx="200" cy="0" r="2" fill="#666" />
+<circle cx="0" cy="40" r="2" fill="#666" />
+<circle cx="40" cy="40" r="2" fill="#666" />
+<circle cx="80" cy="40" r="2" fill="#666" />
+<circle cx="120" cy="40" r="2" fill="#666" />
+<circle cx="160" cy="40" r="2" fill="#666" />
+<circle cx="200" cy="40" r="2" fill="#666" />
+<circle cx="0" cy="80" r="2" fill="#666" />
+<circle cx="40" cy="80" r="2" fill="#666" />
+<circle cx="80" cy="80" r="2" fill="#666" />
+<circle cx="120" cy="80" r="2" fill="#666" />
+<circle cx="160" cy="80" r="2" fill="#666" />
+<circle cx="200" cy="80" r="2" fill="#666" />
+<circle cx="0" cy="120" r="2" fill="#666" />
+<circle cx="40" cy="120" r="2" fill="#666" />
+<circle cx="80" cy="120" r="2" fill="#666" />
+<circle cx="120" cy="120" r="2" fill="#666" />
+<circle cx="160" cy="120" r="2" fill="#666" />
+<circle cx="200" cy="120" r="2" fill="#666" />
+<circle cx="0" cy="160" r="2" fill="#666" />
+<circle cx="40" cy="160" r="2" fill="#666" />
+<circle cx="80" cy="160" r="2" fill="#666" />
+<circle cx="120" cy="160" r="2" fill="#666" />
+<circle cx="160" cy="160" r="2" fill="#666" />
+<circle cx="200" cy="160" r="2" fill="#666" />
+<circle cx="0" cy="200" r="2" fill="#666" />
+<circle cx="40" cy="200" r="2" fill="#666" />
+<circle cx="80" cy="200" r="2" fill="#666" />
+<circle cx="120" cy="200" r="2" fill="#666" />
+<circle cx="160" cy="200" r="2" fill="#666" />
+<circle cx="200" cy="200" r="2" fill="#666" />
+</g>
+<g id="pattern">
+<path d="M 0 0 L 200 0 L 200 200 L 0 200 L 0 0" stroke="#C2185B" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+</g>
+</svg>

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kolam Gallery</title>
+  <script>
+    async function generateKolam() {
+      const rows = parseInt(document.getElementById('rows').value) || 6;
+      const cols = parseInt(document.getElementById('cols').value) || 6;
+      const spacing = parseFloat(document.getElementById('spacing').value) || 40;
+      const body = { rows, cols, spacing, grid_type: 'square', style: 'traditional' };
+      const res = await fetch('http://127.0.0.1:5000/api/generate', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      await loadGallery();
+      document.getElementById('current').innerHTML = data.svg;
+      document.getElementById('chat-output').textContent = '';
+      window.currentMeta = data.metadata;
+    }
+
+    async function convertImage() {
+      const fileInput = document.getElementById('imgfile');
+      if (!fileInput.files || !fileInput.files[0]) { alert('Choose an image first'); return; }
+      const form = new FormData();
+      form.append('file', fileInput.files[0]);
+      form.append('mode', document.getElementById('mode').value || 'vector');
+      // Optional params (tweak if needed)
+      form.append('max_contours', document.getElementById('max_contours').value || '3');
+      form.append('canny1', document.getElementById('canny1').value || '100');
+      form.append('canny2', document.getElementById('canny2').value || '200');
+      form.append('min_area', document.getElementById('min_area').value || '100');
+      form.append('simplify', document.getElementById('simplify').value || '0.01');
+      // vector params
+      form.append('thresh_block', document.getElementById('thresh_block').value || '21');
+      form.append('thresh_C', document.getElementById('thresh_C').value || '5');
+      form.append('retrieve_mode', document.getElementById('retrieve_mode').value || 'external');
+      form.append('resample_step', document.getElementById('resample_step').value || '4');
+      form.append('smooth_alpha', document.getElementById('smooth_alpha').value || '0.5');
+
+      const res = await fetch('http://127.0.0.1:5000/api/convert', { method: 'POST', body: form });
+      const data = await res.json();
+      if (data.error) { alert('Convert failed: ' + data.error); return; }
+      await loadGallery();
+      document.getElementById('current').innerHTML = data.svg;
+      document.getElementById('chat-output').textContent = '';
+      window.currentMeta = data.metadata;
+    }
+
+    async function loadGallery() {
+      const res = await fetch('http://127.0.0.1:5000/api/gallery');
+      const data = await res.json();
+      const list = document.getElementById('gallery');
+      list.innerHTML = '';
+      data.items.forEach((it) => {
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `
+          <div class="thumb">${it.svg}</div>
+          <div class="meta">
+            <div><strong>ID:</strong> ${it.id}</div>
+            <div><strong>Created:</strong> ${it.created}</div>
+            <button onclick="showItem('${it.id}')">Open</button>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    async function showItem(id) {
+      const res = await fetch(`http://127.0.0.1:5000/api/gallery/${id}`);
+      const data = await res.json();
+      document.getElementById('current').innerHTML = data.svg;
+      document.getElementById('chat-output').textContent = '';
+      window.currentMeta = data.metadata;
+    }
+
+    async function askChat() {
+      const q = document.getElementById('chat-input').value;
+      const body = { message: q };
+      if (window.currentMeta) body.metadata = window.currentMeta;
+      const res = await fetch('http://127.0.0.1:5000/api/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      document.getElementById('chat-output').textContent = data.answer || 'No answer';
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadGallery();
+    });
+  </script>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 0; background:#fafafa; color:#111; }
+    header { background:#111; color:#fff; padding: 12px 16px; }
+    .container { padding: 16px; max-width: 1200px; margin: 0 auto; }
+    .controls { display:flex; gap: 8px; flex-wrap: wrap; align-items:center; margin-bottom: 12px; }
+    .controls input[type="number"] { width: 80px; padding: 6px; }
+    .btn { padding: 8px 12px; background:#0ea5e9; color:#fff; border:none; border-radius:6px; cursor:pointer; }
+    .layout { display:grid; grid-template-columns: 1fr 320px; gap: 16px; }
+    .panel { background:#fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; }
+    .gallery { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+    .card { background:#fff; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; display:flex; flex-direction:column; }
+    .thumb { background:#f3f4f6; padding:8px; display:flex; align-items:center; justify-content:center; height: 180px; }
+    .thumb svg { max-width: 100%; max-height: 100%; }
+    .meta { padding:8px; display:flex; gap:8px; align-items:center; justify-content:space-between; }
+    .current svg { width:100%; height:auto; }
+    .chat { display:flex; gap: 8px; margin-top: 8px; }
+    .chat input { flex:1; padding:8px; }
+    .chat pre { background:#f3f4f6; padding:8px; border-radius:6px; white-space:pre-wrap; }
+    .controls .group { display:flex; gap:8px; align-items:center; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Kolam Gallery</h1>
+  </header>
+  <div class="container">
+    <div class="controls panel">
+      <div class="group">
+        <label>Rows <input id="rows" type="number" value="6" /></label>
+        <label>Cols <input id="cols" type="number" value="6" /></label>
+        <label>Spacing <input id="spacing" type="number" value="40" /></label>
+        <button class="btn" onclick="generateKolam()">Generate Kolam</button>
+      </div>
+      <div class="group">
+        <input id="imgfile" type="file" accept="image/*" />
+        <select id="mode">
+          <option value="vector" selected>Vector (smooth, recommended)</option>
+          <option value="contour">Contour (raw edges)</option>
+        </select>
+        <small style="opacity:.8">Tip: For rangoli→kolam, start with Min area=800–2000, Resample=8–12, Thresh block=31–41, Thresh C=2–6, Retrieve=tree, Smooth α=0.8</small>
+        <button class="btn" onclick="convertImage()">Convert Image</button>
+      </div>
+      <div class="group">
+        <label>Contours <input id="max_contours" type="number" value="10" /></label>
+        <label>Canny1 <input id="canny1" type="number" value="100" /></label>
+        <label>Canny2 <input id="canny2" type="number" value="200" /></label>
+        <label>Min area <input id="min_area" type="number" value="800" /></label>
+        <label>Simplify <input id="simplify" type="number" step="0.005" value="0.01" /></label>
+      </div>
+      <div class="group">
+        <label>Thresh block <input id="thresh_block" type="number" value="31" /></label>
+        <label>Thresh C <input id="thresh_C" type="number" value="3" /></label>
+        <label>Retrieve <input id="retrieve_mode" type="text" value="tree" /></label>
+        <label>Resample <input id="resample_step" type="number" value="8" /></label>
+        <label>Smooth α <input id="smooth_alpha" type="number" step="0.1" value="0.8" /></label>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="panel current">
+        <h3>Current Kolam</h3>
+        <div id="current" style="min-height:220px;">
+          <em>Generate, convert an image, or select from gallery…</em>
+        </div>
+        <div class="chat">
+          <input id="chat-input" placeholder="Ask about this kolam (symmetry, grid, meaning, steps)…" />
+          <button class="btn" onclick="askChat()">Ask</button>
+        </div>
+        <pre id="chat-output"></pre>
+      </div>
+
+      <div class="panel">
+        <h3>Gallery</h3>
+        <div id="gallery" class="gallery"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
