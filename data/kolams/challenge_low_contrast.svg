@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="920" viewBox="-10 -10 920 920">
+<rect x="0" y="0" width="900" height="900" fill="#000"  />
+<g id="dot-grid" fill="#888">
+<circle cx="74.32" cy="141.64" r="8.06" fill="#888" />
+<circle cx="175.11" cy="142.40" r="8.06" fill="#888" />
+<circle cx="275.91" cy="143.16" r="8.06" fill="#888" />
+<circle cx="376.71" cy="143.92" r="8.06" fill="#888" />
+<circle cx="477.50" cy="144.69" r="8.06" fill="#888" />
+<circle cx="578.30" cy="145.45" r="8.06" fill="#888" />
+<circle cx="679.10" cy="146.21" r="8.06" fill="#888" />
+<circle cx="779.90" cy="146.97" r="8.06" fill="#888" />
+<circle cx="124.05" cy="229.31" r="8.06" fill="#888" />
+<circle cx="224.85" cy="230.08" r="8.06" fill="#888" />
+<circle cx="325.65" cy="230.84" r="8.06" fill="#888" />
+<circle cx="426.45" cy="231.60" r="8.06" fill="#888" />
+<circle cx="527.24" cy="232.36" r="8.06" fill="#888" />
+<circle cx="628.04" cy="233.12" r="8.06" fill="#888" />
+<circle cx="728.84" cy="233.88" r="8.06" fill="#888" />
+<circle cx="829.63" cy="234.64" r="8.06" fill="#888" />
+<circle cx="73.00" cy="316.23" r="8.06" fill="#888" />
+<circle cx="173.79" cy="316.99" r="8.06" fill="#888" />
+<circle cx="274.59" cy="317.75" r="8.06" fill="#888" />
+<circle cx="375.39" cy="318.51" r="8.06" fill="#888" />
+<circle cx="476.19" cy="319.27" r="8.06" fill="#888" />
+<circle cx="576.98" cy="320.03" r="8.06" fill="#888" />
+<circle cx="677.78" cy="320.79" r="8.06" fill="#888" />
+<circle cx="778.58" cy="321.56" r="8.06" fill="#888" />
+<circle cx="122.74" cy="403.90" r="8.06" fill="#888" />
+<circle cx="223.53" cy="404.66" r="8.06" fill="#888" />
+<circle cx="324.33" cy="405.42" r="8.06" fill="#888" />
+<circle cx="425.13" cy="406.18" r="8.06" fill="#888" />
+<circle cx="525.92" cy="406.95" r="8.06" fill="#888" />
+<circle cx="626.72" cy="407.71" r="8.06" fill="#888" />
+<circle cx="727.52" cy="408.47" r="8.06" fill="#888" />
+<circle cx="828.32" cy="409.23" r="8.06" fill="#888" />
+<circle cx="71.68" cy="490.81" r="8.06" fill="#888" />
+<circle cx="172.48" cy="491.57" r="8.06" fill="#888" />
+<circle cx="273.27" cy="492.34" r="8.06" fill="#888" />
+<circle cx="374.07" cy="493.10" r="8.06" fill="#888" />
+<circle cx="474.87" cy="493.86" r="8.06" fill="#888" />
+<circle cx="575.66" cy="494.62" r="8.06" fill="#888" />
+<circle cx="676.46" cy="495.38" r="8.06" fill="#888" />
+<circle cx="777.26" cy="496.14" r="8.06" fill="#888" />
+<circle cx="121.42" cy="578.49" r="8.06" fill="#888" />
+<circle cx="222.21" cy="579.25" r="8.06" fill="#888" />
+<circle cx="323.01" cy="580.01" r="8.06" fill="#888" />
+<circle cx="423.81" cy="580.77" r="8.06" fill="#888" />
+<circle cx="524.61" cy="581.53" r="8.06" fill="#888" />
+<circle cx="625.40" cy="582.29" r="8.06" fill="#888" />
+<circle cx="726.20" cy="583.05" r="8.06" fill="#888" />
+<circle cx="827.00" cy="583.81" r="8.06" fill="#888" />
+<circle cx="70.36" cy="665.40" r="8.06" fill="#888" />
+<circle cx="171.16" cy="666.16" r="8.06" fill="#888" />
+<circle cx="271.95" cy="666.92" r="8.06" fill="#888" />
+<circle cx="372.75" cy="667.68" r="8.06" fill="#888" />
+<circle cx="473.55" cy="668.44" r="8.06" fill="#888" />
+<circle cx="574.35" cy="669.20" r="8.06" fill="#888" />
+<circle cx="675.14" cy="669.97" r="8.06" fill="#888" />
+<circle cx="775.94" cy="670.73" r="8.06" fill="#888" />
+<circle cx="120.10" cy="753.07" r="8.06" fill="#888" />
+<circle cx="220.90" cy="753.83" r="8.06" fill="#888" />
+<circle cx="321.69" cy="754.59" r="8.06" fill="#888" />
+<circle cx="422.49" cy="755.36" r="8.06" fill="#888" />
+<circle cx="523.29" cy="756.12" r="8.06" fill="#888" />
+<circle cx="624.08" cy="756.88" r="8.06" fill="#888" />
+<circle cx="724.88" cy="757.64" r="8.06" fill="#888" />
+<circle cx="825.68" cy="758.40" r="8.06" fill="#888" />
+</g>
+<g id="kolam">
+<path d="M 477.50 144.69 L 422.49 755.36" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+</g>
+</svg>

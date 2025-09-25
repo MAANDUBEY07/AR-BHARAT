@@ -5,12 +5,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Kolam Gallery</title>
   <script>
+    // --- Utilities: settings persistence ---
+    const persistKeys = [
+      'rows','cols','spacing','mode','grid_rows','grid_cols','simplicity','symmetry','grid_type',
+      'matrix_json','matrix_color','matrix_spacing','matrix_lw','prop_n','prop_showdots',
+      'max_contours','canny1','canny2','min_area','simplify','thresh_block','thresh_C','retrieve_mode','resample_step','smooth_alpha',
+      'top_k','min_component_area'
+    ];
+    function saveSetting(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      let v = el.type === 'checkbox' ? (el.checked ? '1' : '0') : el.value;
+      try { localStorage.setItem('kolam.' + id, v); } catch {}
+    }
+    function loadSetting(id, def) {
+      try {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const v = localStorage.getItem('kolam.' + id);
+        if (v == null) { if (def != null) { if (el.type === 'checkbox') el.checked = !!def; else el.value = def; } return; }
+        if (el.type === 'checkbox') el.checked = (v === '1'); else el.value = v;
+      } catch {}
+    }
+    function wirePersistence() {
+      persistKeys.forEach((k)=>{
+        const el = document.getElementById(k);
+        if (el) el.addEventListener('change', ()=> saveSetting(k));
+      });
+    }
+
     async function generateKolam() {
       const rows = parseInt(document.getElementById('rows').value) || 6;
       const cols = parseInt(document.getElementById('cols').value) || 6;
       const spacing = parseFloat(document.getElementById('spacing').value) || 40;
       const body = { rows, cols, spacing, grid_type: 'square', style: 'traditional' };
-      const res = await fetch('http://127.0.0.1:5000/api/generate', {
+      const res = await fetch((window.API_BASE||'') + '/api/generate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
       });
       const data = await res.json();
@@ -38,38 +67,97 @@
       form.append('retrieve_mode', document.getElementById('retrieve_mode').value || 'external');
       form.append('resample_step', document.getElementById('resample_step').value || '4');
       form.append('smooth_alpha', document.getElementById('smooth_alpha').value || '0.5');
+      // Dot-grid creative controls
+      const gRows = document.getElementById('grid_rows')?.value;
+      const gCols = document.getElementById('grid_cols')?.value;
+      const simplicity = document.getElementById('simplicity')?.value || 'simple';
+      const symmetry = document.getElementById('symmetry')?.value || 'auto';
+      const gridType = document.getElementById('grid_type')?.value || 'square';
+      if (document.getElementById('mode').value === 'dl') {
+        if (gRows) form.append('grid_rows', gRows);
+        if (gCols) form.append('grid_cols', gCols);
+        form.append('simplicity', simplicity);
+        form.append('symmetry', symmetry);
+        form.append('grid_type', gridType);
+        // Let UI control DL params; do not force defaults here
+        // New: expose DL richness controls
+        const topK = document.getElementById('top_k')?.value || '24';
+        const minComp = document.getElementById('min_component_area')?.value || '80';
+        form.append('top_k', topK);
+        form.append('min_component_area', minComp);
+      }
 
-      const res = await fetch('http://127.0.0.1:5000/api/convert', { method: 'POST', body: form });
+      // show progress
+      const bar = document.getElementById('progress-bar');
+      if (bar) { bar.style.width = '25%'; }
+      const res = await fetch((window.API_BASE||'') + '/api/convert', { method: 'POST', body: form });
+      if (bar) { bar.style.width = '70%'; }
       const data = await res.json();
-      if (data.error) { alert('Convert failed: ' + data.error); return; }
+      if (data.error) { if (bar) { bar.style.width = '0%'; } alert('Convert failed: ' + data.error); return; }
       await loadGallery();
       document.getElementById('current').innerHTML = data.svg;
       document.getElementById('chat-output').textContent = '';
       window.currentMeta = data.metadata;
+      // Auto-fill Matrix textarea with inferred M if provided
+      if (data.M && Array.isArray(data.M)) {
+        const ta = document.getElementById('matrix_json');
+        if (ta) { ta.value = JSON.stringify(data.M); saveSetting('matrix_json'); }
+      }
+      if (bar) { bar.style.width = '100%'; setTimeout(()=>{ bar.style.width = '0%'; }, 600); }
     }
 
     async function loadGallery() {
-      const res = await fetch('http://127.0.0.1:5000/api/gallery');
+      // Main gallery
+      const res = await fetch((window.API_BASE||'') + '/api/gallery?sort=recent');
       const data = await res.json();
       const list = document.getElementById('gallery');
       list.innerHTML = '';
-      data.items.forEach((it) => {
-        const div = document.createElement('div');
-        div.className = 'card';
-        div.innerHTML = `
-          <div class="thumb">${it.svg}</div>
-          <div class="meta">
-            <div><strong>ID:</strong> ${it.id}</div>
-            <div><strong>Created:</strong> ${it.created}</div>
-            <button onclick="showItem('${it.id}')">Open</button>
+      data.items.forEach((it) => list.appendChild(tile(it)));
+
+      // Rails
+      const resTrending = await fetch((window.API_BASE||'') + '/api/gallery?sort=trending');
+      const dataTrending = await resTrending.json();
+      const railTrending = document.getElementById('rail-trending');
+      railTrending.innerHTML = '';
+      dataTrending.items.forEach((it) => railTrending.appendChild(tile(it, true)));
+
+      const resNew = await fetch((window.API_BASE||'') + '/api/gallery?sort=recent');
+      const dataNew = await resNew.json();
+      const railNew = document.getElementById('rail-new');
+      railNew.innerHTML = '';
+      dataNew.items.forEach((it) => railNew.appendChild(tile(it, true)));
+
+      const railDay = document.getElementById('rail-day');
+      railDay.innerHTML = '';
+      data.items.slice(0, 10).forEach((it) => railDay.appendChild(tile(it, true)));
+    }
+
+    function tile(it, compact=false) {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.innerHTML = `
+        <div class="thumb">${it.svg}</div>
+        <div class="meta">
+          <div style="font-size:12px;opacity:.9;">${it.artist || 'Anonymous'}</div>
+          <div class="actions">
+            <button class="like" onclick="likeItem('${it.id}', this)">❤ ${it.likes || 0}</button>
+            <button class="btn" onclick="showItem('${it.id}')">Open</button>
           </div>
-        `;
-        list.appendChild(div);
-      });
+        </div>
+      `;
+      return div;
+    }
+
+    async function likeItem(id, btn) {
+      const res = await fetch(`${(window.API_BASE||'')}/api/gallery/${id}/like`, { method: 'POST' });
+      const data = await res.json();
+      if (data && data.likes != null) {
+        btn.textContent = `❤ ${data.likes}`;
+      }
     }
 
     async function showItem(id) {
-      const res = await fetch(`http://127.0.0.1:5000/api/gallery/${id}`);
+      const res = await fetch(`${(window.API_BASE||'')}/api/gallery/${id}`);
       const data = await res.json();
       document.getElementById('current').innerHTML = data.svg;
       document.getElementById('chat-output').textContent = '';
@@ -80,92 +168,344 @@
       const q = document.getElementById('chat-input').value;
       const body = { message: q };
       if (window.currentMeta) body.metadata = window.currentMeta;
-      const res = await fetch('http://127.0.0.1:5000/api/chat', {
+      const res = await fetch((window.API_BASE||'') + '/api/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
       });
       const data = await res.json();
       document.getElementById('chat-output').textContent = data.answer || 'No answer';
     }
 
+    async function drawMatrixKolam() {
+      try {
+        const raw = document.getElementById('matrix_json').value.trim();
+        const color = document.getElementById('matrix_color').value || '#2458ff';
+        const spacing = parseFloat(document.getElementById('matrix_spacing').value) || 40;
+        const lw = parseFloat(document.getElementById('matrix_lw').value) || 2;
+        const M = JSON.parse(raw);
+
+        const res = await fetch((window.API_BASE||'') + '/api/draw_matrix', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ M, color, spacing, linewidth: lw, show_dots: true })
+        });
+        const data = await res.json();
+        if (data.error) { alert('Draw failed: ' + data.error); return; }
+        await loadGallery();
+        document.getElementById('current').innerHTML = data.svg;
+        document.getElementById('chat-output').textContent = '';
+        window.currentMeta = data.metadata;
+      } catch (e) {
+        alert('Invalid matrix JSON: ' + e.message);
+      }
+    }
+
+    async function proposeKolam(kind) {
+      const n = parseInt(document.getElementById('prop_n').value) || 7;
+      const spacing = parseFloat(document.getElementById('matrix_spacing').value) || 40;
+      const color = document.getElementById('matrix_color').value || '#2458ff';
+      const lw = parseFloat(document.getElementById('matrix_lw').value) || 2;
+      const show_dots = !!document.getElementById('prop_showdots').checked;
+
+      const url = (window.API_BASE||'') + (kind === '1d' ? '/api/propose/1d' : '/api/propose/2d');
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ n, spacing, color, linewidth: lw, show_dots })
+      });
+      const data = await res.json();
+      if (data.error) { alert('Propose failed: ' + data.error); return; }
+      await loadGallery();
+      document.getElementById('current').innerHTML = data.svg;
+      document.getElementById('chat-output').textContent = '';
+      window.currentMeta = data.metadata;
+      if (data.M) {
+        document.getElementById('matrix_json').value = JSON.stringify(data.M);
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
+      // Point frontend to backend host/port of the current page
+      const origin = window.location.origin;
+      // If we are served under /app, API is same origin
+      window.API_BASE = origin.includes('/app') ? origin.split('/app')[0] : origin;
+
+      // Load settings
+      persistKeys.forEach(k => loadSetting(k));
+      wirePersistence();
+
+      // Default mode to DL if no persisted value
+      const modeSel = document.getElementById('mode');
+      if (localStorage.getItem('kolam.mode') == null) {
+        modeSel.value = 'dl';
+      }
+
       loadGallery();
     });
   </script>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 0; background:#fafafa; color:#111; }
-    header { background:#111; color:#fff; padding: 12px 16px; }
-    .container { padding: 16px; max-width: 1200px; margin: 0 auto; }
-    .controls { display:flex; gap: 8px; flex-wrap: wrap; align-items:center; margin-bottom: 12px; }
-    .controls input[type="number"] { width: 80px; padding: 6px; }
-    .btn { padding: 8px 12px; background:#0ea5e9; color:#fff; border:none; border-radius:6px; cursor:pointer; }
-    .layout { display:grid; grid-template-columns: 1fr 320px; gap: 16px; }
-    .panel { background:#fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; }
-    .gallery { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
-    .card { background:#fff; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; display:flex; flex-direction:column; }
-    .thumb { background:#f3f4f6; padding:8px; display:flex; align-items:center; justify-content:center; height: 180px; }
-    .thumb svg { max-width: 100%; max-height: 100%; }
-    .meta { padding:8px; display:flex; gap:8px; align-items:center; justify-content:space-between; }
-    .current svg { width:100%; height:auto; }
+    /* Theme */
+    :root {
+      --bg-1: #0C120D;
+      --bg-2: #1A251C;
+      --panel: #11180F;
+      --card: #0E160F;
+      --border: rgba(170, 255, 170, 0.12);
+      --border-strong: rgba(196, 255, 171, 0.22);
+      --text: #F2FFE8;
+      --muted: #B6D6B0;
+      --accent: #E9C46A;
+      --accent-2: #9BE15D;
+      --accent-3: #34D399;
+      --shadow: 0 6px 18px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.02);
+    }
+
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 0; color: var(--text);
+      background: radial-gradient(1200px 700px at 8% 0%, rgba(155,225,93,.08), transparent 50%),
+                  radial-gradient(900px 600px at 100% 10%, rgba(233,196,106,.08), transparent 45%),
+                  linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+    }
+
+    header { padding: 10px 16px; color: var(--text); background: linear-gradient(180deg, rgba(22,32,24,1) 0%, rgba(16,22,18,1) 100%);
+      border-bottom: 1px solid var(--border); box-shadow: var(--shadow); position: sticky; top: 0; z-index: 10; }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: .4px; font-weight: 700; display: inline-flex; gap: 10px; align-items: center; }
+    header .brand { background: linear-gradient(90deg, var(--accent-2), var(--accent)); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: 0 0 18px rgba(155,225,93,.08); }
+    nav { display:flex; gap:10px; flex-wrap:wrap; }
+    nav a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-radius: 9999px; border:1px solid var(--border); }
+    nav a:hover { border-color: var(--border-strong); }
+
+    .container { padding: 16px; max-width: 1280px; margin: 0 auto; }
+
+    .layout { display:grid; grid-template-columns: 1fr 360px; gap: 16px; align-items:start; }
+
+    .panel { background: linear-gradient(180deg, rgba(17,24,15,.96), rgba(15,22,14,.96)); border: 1px solid var(--border);
+      border-radius: 14px; padding: 12px; box-shadow: var(--shadow); }
+
+    .section h2 { margin: 6px 0 10px; font-size: 18px; background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: 0 0 14px rgba(233,196,106,.14); }
+
+    .controls { display:flex; gap: 10px; flex-wrap: wrap; align-items:center; margin-bottom: 12px; }
+
+    .controls input[type="number"], .controls select, .controls input[type="color"], .controls input[type="text"], .controls textarea {
+      padding: 8px 10px; background: rgba(16,24,16,.9); color: var(--text);
+      border: 1px solid var(--border); border-radius: 10px; box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+      outline: none; transition: box-shadow .2s ease, border-color .2s ease;
+    }
+    .controls input[type="number"]:focus, .controls select:focus, .controls input[type="text"]:focus, .controls textarea:focus {
+      border-color: var(--accent-2); box-shadow: 0 0 0 3px rgba(155,225,93,.15), inset 0 1px 0 rgba(255,255,255,.03);
+    }
+
+    .btn { padding: 9px 14px; border: none; border-radius: 9999px; cursor: pointer; color: #20220f;
+      background: linear-gradient(180deg, #FFD15A, #E9B949); box-shadow: 0 6px 18px rgba(233,185,73,.25), inset 0 1px 0 rgba(255,255,255,.35);
+      transition: transform .15s ease, filter .15s ease, box-shadow .2s ease; font-weight: 600; }
+    .btn:hover { filter: brightness(1.05); transform: translateY(-1px); box-shadow: 0 10px 24px rgba(233,185,73,.28), inset 0 1px 0 rgba(255,255,255,.5); }
+    .btn:active { transform: translateY(0); filter: brightness(.98); }
+
+    .gallery { display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+    .rail { display:flex; gap:12px; overflow-x:auto; padding-bottom: 6px; scrollbar-width: thin; }
+
+    .card { background: radial-gradient(600px 180px at 10% 0%, rgba(155,225,93,.06), transparent 60%), linear-gradient(180deg, rgba(14,22,15,.98), rgba(12,18,13,.98));
+      border: 1px solid var(--border); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; min-width: 260px;
+      box-shadow: var(--shadow); transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+    .card:hover { transform: translateY(-2px); border-color: var(--border-strong); box-shadow: 0 10px 24px rgba(0,0,0,.45), 0 0 0 1px rgba(155,225,93,.06) inset; }
+
+    .thumb { background: radial-gradient(400px 160px at 50% 30%, rgba(155,225,93,.12), rgba(233,196,106,.08) 40%, transparent 70%), #0D140E;
+      padding: 10px; display:flex; align-items:center; justify-content:center; height: 200px; position: relative; border-bottom: 1px solid var(--border); }
+    .thumb svg { max-width: 100%; max-height: 100%; filter: drop-shadow(0 2px 10px rgba(155,225,93,0.18)); }
+    .thumb::after { content:""; position:absolute; inset:6px; border:1px solid rgba(155,225,93,0.10); border-radius:12px; opacity:0; transition: opacity .2s ease, transform .2s ease; transform: scale(0.985); }
+    .card:hover .thumb::after { opacity:1; transform: scale(1); }
+
+    .meta { padding:10px; display:flex; gap:8px; align-items:center; justify-content:space-between; color: var(--muted); }
+    .meta .actions { display:flex; gap:8px; align-items:center; }
+
+    .current svg { width: 100%; height: auto; }
+
     .chat { display:flex; gap: 8px; margin-top: 8px; }
-    .chat input { flex:1; padding:8px; }
-    .chat pre { background:#f3f4f6; padding:8px; border-radius:6px; white-space:pre-wrap; }
-    .controls .group { display:flex; gap:8px; align-items:center; }
+    .chat input { flex:1; padding:8px; background: rgba(16,24,16,.9); color: var(--text); border:1px solid var(--border); border-radius:10px; }
+    .chat input:focus { border-color: var(--accent-2); box-shadow: 0 0 0 3px rgba(155,225,93,.15); outline: none; }
+    .chat pre { background: linear-gradient(180deg, rgba(16,24,16,.95), rgba(14,20,14,.95)); padding:8px; border-radius:10px; white-space:pre-wrap; color:#DCEFD6; border: 1px solid var(--border); }
+
+    .progress { height: 4px; background: rgba(24,34,24,1); position:relative; overflow:hidden; border-radius:4px; border: 1px solid var(--border); }
+    .progress .bar { position:absolute; left:0; top:0; bottom:0; width:0%; background: linear-gradient(90deg, var(--accent-2), var(--accent)); box-shadow: 0 0 20px rgba(155,225,93,.35); transition: width .3s ease; }
+
+    .nav-row { display:flex; gap:12px; align-items:center; justify-content:space-between; }
   </style>
 </head>
 <body>
   <header>
-    <h1>Kolam Gallery</h1>
-  </header>
-  <div class="container">
-    <div class="controls panel">
-      <div class="group">
-        <label>Rows <input id="rows" type="number" value="6" /></label>
-        <label>Cols <input id="cols" type="number" value="6" /></label>
-        <label>Spacing <input id="spacing" type="number" value="40" /></label>
-        <button class="btn" onclick="generateKolam()">Generate Kolam</button>
-      </div>
-      <div class="group">
-        <input id="imgfile" type="file" accept="image/*" />
-        <select id="mode">
-          <option value="vector" selected>Vector (smooth, recommended)</option>
-          <option value="contour">Contour (raw edges)</option>
-        </select>
-        <small style="opacity:.8">Tip: For rangoli→kolam, start with Min area=800–2000, Resample=8–12, Thresh block=31–41, Thresh C=2–6, Retrieve=tree, Smooth α=0.8</small>
-        <button class="btn" onclick="convertImage()">Convert Image</button>
-      </div>
-      <div class="group">
-        <label>Contours <input id="max_contours" type="number" value="10" /></label>
-        <label>Canny1 <input id="canny1" type="number" value="100" /></label>
-        <label>Canny2 <input id="canny2" type="number" value="200" /></label>
-        <label>Min area <input id="min_area" type="number" value="800" /></label>
-        <label>Simplify <input id="simplify" type="number" step="0.005" value="0.01" /></label>
-      </div>
-      <div class="group">
-        <label>Thresh block <input id="thresh_block" type="number" value="31" /></label>
-        <label>Thresh C <input id="thresh_C" type="number" value="3" /></label>
-        <label>Retrieve <input id="retrieve_mode" type="text" value="tree" /></label>
-        <label>Resample <input id="resample_step" type="number" value="8" /></label>
-        <label>Smooth α <input id="smooth_alpha" type="number" step="0.1" value="0.8" /></label>
-      </div>
+    <div class="nav-row">
+      <h1><span class="brand">Kolam</span> Gallery</h1>
+      <nav>
+        <a href="#convert">Convert</a>
+        <a href="#matrix">Matrix</a>
+        <a href="#generate">Generate</a>
+        <a href="#gallery">Gallery</a>
+      </nav>
     </div>
+  </header>
 
+  <div class="container">
     <div class="layout">
-      <div class="panel current">
-        <h3>Current Kolam</h3>
-        <div id="current" style="min-height:220px;">
-          <em>Generate, convert an image, or select from gallery…</em>
-        </div>
+      <!-- Left column: Controls & Gallery -->
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <!-- Convert section -->
+        <section id="convert" class="section panel">
+          <h2>Convert Image → Kolam</h2>
+          <div class="controls">
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label style="font-weight:600;">Upload Image</label>
+              <input id="imgfile" type="file" accept="image/*" />
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label style="font-weight:600;">Mode</label>
+              <select id="mode">
+                <option value="dl" selected>Dot-grid (AI)</option>
+                <option value="vector">Vector (smooth)</option>
+                <option value="contour">Contour</option>
+              </select>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label style="font-weight:600;">Grid (auto)</label>
+              <div style="display:flex; gap:8px;">
+                <input id="grid_rows" type="number" placeholder="auto" min="3" max="49" title="Rows (optional)" />
+                <input id="grid_cols" type="number" placeholder="auto" min="3" max="49" title="Cols (optional)" />
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label style="font-weight:600;">Simplicity</label>
+              <select id="simplicity">
+                <option value="simple" selected>Simple</option>
+                <option value="medium">Medium</option>
+                <option value="complex">Complex</option>
+              </select>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label style="font-weight:600;">Symmetry</label>
+              <select id="symmetry">
+                <option value="auto" selected>Auto</option>
+                <option value="rotational">Rotational</option>
+                <option value="mirrored">Mirrored</option>
+                <option value="free">Free-form</option>
+              </select>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label style="font-weight:600;">Grid Type</label>
+              <select id="grid_type">
+                <option value="square" selected>Square</option>
+                <option value="hex">Hexagonal</option>
+              </select>
+            </div>
+            <div style="flex:1;min-width:120px;display:flex;flex-direction:column;gap:6px;">
+              <label style="font-weight:600;visibility:hidden;">Action</label>
+              <button class="btn" onclick="convertImage()">Convert</button>
+              <div class="progress"><div id="progress-bar" class="bar"></div></div>
+            </div>
+          </div>
+
+          <details class="panel" style="margin-top:8px;">
+            <summary style="cursor:pointer; font-weight:600;">Advanced</summary>
+            <div class="controls" style="margin-top:8px;">
+              <label>Contours <input id="max_contours" type="number" value="10" /></label>
+              <label>Canny1 <input id="canny1" type="number" value="100" /></label>
+              <label>Canny2 <input id="canny2" type="number" value="200" /></label>
+              <label>Min area <input id="min_area" type="number" value="800" /></label>
+              <label>Simplify <input id="simplify" type="number" step="0.005" value="0.01" /></label>
+            </div>
+            <div class="controls">
+              <label>Thresh block <input id="thresh_block" type="number" value="31" /></label>
+              <label>Thresh C <input id="thresh_C" type="number" value="3" /></label>
+              <label>Retrieve <input id="retrieve_mode" type="text" value="tree" /></label>
+              <label>Resample <input id="resample_step" type="number" value="8" /></label>
+              <label>Smooth α <input id="smooth_alpha" type="number" step="0.1" value="0.8" /></label>
+            </div>
+            <div class="controls">
+              <label>DL top_k <input id="top_k" type="number" value="24" /></label>
+              <label>DL min area (component) <input id="min_component_area" type="number" value="80" /></label>
+            </div>
+          </details>
+        </section>
+
+        <!-- Matrix section -->
+        <section id="matrix" class="section panel">
+          <h2>Draw / Propose (Matrix)</h2>
+          <div class="controls" style="align-items:flex-end; gap:12px; width:100%; flex-wrap:wrap;">
+            <div style="display:flex; flex-direction:column; gap:6px; min-width:260px; flex:1;">
+              <label style="font-weight:600;">Matrix M (JSON, e.g. [[0,1,0],[1,2,1],[0,1,0]])</label>
+              <textarea id="matrix_json" rows="3" style="padding:8px; background:rgba(16,24,16,.9); color:#F2FFE8; border:1px solid rgba(170,255,170,.12); border-radius:10px;"></textarea>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label style="font-weight:600;">Line color</label>
+              <input id="matrix_color" type="color" value="#2458ff" style="width:120px; height:36px; background:transparent; border:1px solid rgba(170,255,170,.12); border-radius:10px;"/>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label style="font-weight:600;">Spacing</label>
+              <input id="matrix_spacing" type="number" value="40" />
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label style="font-weight:600;">Line width</label>
+              <input id="matrix_lw" type="number" value="2" step="0.5" />
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label style="font-weight:600;">Propose N</label>
+              <input id="prop_n" type="number" value="7" min="3" max="49" />
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-start;">
+              <label style="font-weight:600;">Show dots</label>
+              <input id="prop_showdots" type="checkbox" />
+            </div>
+            <div style="flex:0 0 auto; display:flex; flex-direction:column; gap:6px; min-width:260px;">
+              <label style="font-weight:600; visibility:hidden;">Action</label>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn" onclick="drawMatrixKolam()">Draw Matrix</button>
+                <button class="btn" onclick="proposeKolam('1d')">Propose 1D</button>
+                <button class="btn" onclick="proposeKolam('2d')">Propose 2D</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Generate section -->
+        <section id="generate" class="section panel">
+          <h2>Generate (Grid)</h2>
+          <div class="controls">
+            <label>Rows <input id="rows" type="number" value="6" /></label>
+            <label>Cols <input id="cols" type="number" value="6" /></label>
+            <label>Spacing <input id="spacing" type="number" value="40" /></label>
+            <button class="btn" onclick="generateKolam()">Generate Kolam</button>
+          </div>
+        </section>
+
+        <!-- Discovery Rails -->
+        <section id="gallery" class="section panel" style="margin-bottom:0;">
+          <h2>Gallery</h2>
+          <div class="panel" style="margin-bottom:12px;">
+            <h3 class="section">Trending Kolams</h3>
+            <div id="rail-trending" class="rail"></div>
+          </div>
+          <div class="panel" style="margin-bottom:12px;">
+            <h3 class="section">Newly Converted Designs</h3>
+            <div id="rail-new" class="rail"></div>
+          </div>
+          <div class="panel" style="margin-bottom:12px;">
+            <h3 class="section">Today’s Picks</h3>
+            <div id="rail-day" class="rail"></div>
+          </div>
+          <div class="panel">
+            <h3 class="section">All Items</h3>
+            <div id="gallery" class="gallery"></div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right column: Current & Chat -->
+      <aside class="panel" style="position:sticky; top:72px;">
+        <h2>Current</h2>
+        <div id="current" class="current" style="min-height:200px;"></div>
         <div class="chat">
-          <input id="chat-input" placeholder="Ask about this kolam (symmetry, grid, meaning, steps)…" />
+          <input id="chat-input" type="text" placeholder="Ask about the current kolam..." />
           <button class="btn" onclick="askChat()">Ask</button>
         </div>
         <pre id="chat-output"></pre>
-      </div>
-
-      <div class="panel">
-        <h3>Gallery</h3>
-        <div id="gallery" class="gallery"></div>
-      </div>
+      </aside>
     </div>
   </div>
 </body>
