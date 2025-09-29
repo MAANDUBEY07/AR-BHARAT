@@ -55,5 +55,12 @@ data/*.jpeg
 .env.local
 .env.production
 
+# Frontend node modules and build
+node_modules/
+dist/
+
+# Duplicate frontend directory (cleanup needed)
+frontend/
+
 # Zencoder specific
 .zencoder/rules/repo.md

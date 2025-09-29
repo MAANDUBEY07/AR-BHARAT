@@ -1,10 +1,15 @@
 # SIH Project Deployment Guide
 
-## 1. Frontend (Vercel)
-- Go to https://vercel.com/import
-- Connect your GitHub repo (SIH)
-- Vercel auto-detects React/Vite
-- Click Deploy
+## ⚠️ CRITICAL: CREATE NEW VERCEL PROJECT
+
+**DO NOT redeploy existing project - create fresh one to avoid cached errors**
+
+## 1. Frontend (Vercel) - NEW PROJECT REQUIRED
+- Go to https://vercel.com/new (NOT import/existing)
+- Import your GitHub repo: **AR-BHARAT**
+- **Framework**: Vite *(auto-detected)*
+- **Root Directory**: `.` *(leave blank - frontend is now at root)*
+- Click **Deploy**
 - Copy your live site URL
 
 ## 2. Backend (Render) - Option A: Python Service
@@ -35,9 +40,10 @@
 ---
 
 ### Notes
-- If you need to update API URLs, edit `frontend/src/pages/UploadPage.jsx` or wherever your API calls are made.
+- **Frontend is now at repository root level** - no more `/frontend/` subdirectory issues!
+- API URLs are in `src/pages/UploadPage.jsx` and other components (no `/frontend/` prefix)
 - For any issues, check Render and Vercel build logs for errors.
-- Your backend must run from the `backend` directory and have all dependencies listed in `requirements.txt`.
+- Your backend runs from the `backend` directory with all dependencies in `requirements.txt`
 
 ---
 
