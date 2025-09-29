@@ -31,7 +31,10 @@ class TraditionalFlowingKolamGenerator:
             self._generate_concentric_loops,
             self._generate_floral_vine,
             self._generate_geometric_flower,
-            self._generate_radial_burst
+            self._generate_radial_burst,
+            self._generate_traditional_interlaced_grid,
+            self._generate_flowing_lotus_petals,
+            self._generate_symmetrical_loops
         ]
 
     def generate_traditional_kolam(self, img_path: str = None, pattern_size: int = 400) -> str:
@@ -51,61 +54,90 @@ class TraditionalFlowingKolamGenerator:
         return dwg.tostring()
     
     def _generate_lotus_mandala(self, dwg: svgwrite.Drawing, size: int):
-        """Generate lotus mandala-style kolam"""
+        """Generate authentic interlaced lotus kolam pattern"""
         center_x = center_y = size // 2
         
-        # Central dot
-        dwg.add(dwg.circle(center=(center_x, center_y), r=4,
-                          fill=self.traditional_colors['dots']))
+        # Create dot grid foundation - 7x7 grid
+        grid_size = 7
+        dot_spacing = size // 10
+        dots = []
         
-        # Inner petals
-        petal_count = 8
-        inner_radius = size * 0.15
+        for row in range(grid_size):
+            for col in range(grid_size):
+                x = center_x + (col - grid_size//2) * dot_spacing
+                y = center_y + (row - grid_size//2) * dot_spacing
+                dots.append((x, y))
+                # Add foundation dots
+                dwg.add(dwg.circle(center=(x, y), r=3,
+                                  fill=self.traditional_colors['dots']))
         
-        for i in range(petal_count):
-            angle = (2 * math.pi * i) / petal_count
+        # Create interlaced diamond pattern connecting dots
+        # Horizontal interlacing lines
+        for row in range(grid_size):
+            y = center_y + (row - grid_size//2) * dot_spacing
+            path_d = f"M {center_x - 3*dot_spacing} {y}"
             
-            # Petal shape using cubic curves
-            x1 = center_x + inner_radius * math.cos(angle - math.pi/8)
-            y1 = center_y + inner_radius * math.sin(angle - math.pi/8)
-            x2 = center_x + inner_radius * 1.8 * math.cos(angle)
-            y2 = center_y + inner_radius * 1.8 * math.sin(angle)
-            x3 = center_x + inner_radius * math.cos(angle + math.pi/8)
-            y3 = center_y + inner_radius * math.sin(angle + math.pi/8)
+            for col in range(1, grid_size):
+                x = center_x + (col - grid_size//2) * dot_spacing
+                # Create flowing curves between dots
+                prev_x = center_x + (col-1 - grid_size//2) * dot_spacing
+                
+                # Add graceful curve with loop
+                mid_x = (prev_x + x) / 2
+                curve_height = dot_spacing * 0.3 * (1 if (row + col) % 2 == 0 else -1)
+                
+                path_d += f" Q {mid_x} {y + curve_height} {x} {y}"
             
-            # Create petal path
+            dwg.add(dwg.path(d=path_d, stroke=self.traditional_colors['primary'],
+                           stroke_width=2.5, fill='none'))
+        
+        # Vertical interlacing lines
+        for col in range(grid_size):
+            x = center_x + (col - grid_size//2) * dot_spacing
+            path_d = f"M {x} {center_y - 3*dot_spacing}"
+            
+            for row in range(1, grid_size):
+                y = center_y + (row - grid_size//2) * dot_spacing
+                prev_y = center_y + (row-1 - grid_size//2) * dot_spacing
+                
+                mid_y = (prev_y + y) / 2
+                curve_width = dot_spacing * 0.3 * (1 if (row + col) % 2 == 0 else -1)
+                
+                path_d += f" Q {x + curve_width} {mid_y} {x} {y}"
+            
+            dwg.add(dwg.path(d=path_d, stroke=self.traditional_colors['primary'],
+                           stroke_width=2.5, fill='none'))
+        
+        # Add decorative petal elements at corners and edges
+        petal_positions = [
+            (center_x - 2*dot_spacing, center_y - 2*dot_spacing),  # Top-left
+            (center_x + 2*dot_spacing, center_y - 2*dot_spacing),  # Top-right
+            (center_x - 2*dot_spacing, center_y + 2*dot_spacing),  # Bottom-left
+            (center_x + 2*dot_spacing, center_y + 2*dot_spacing),  # Bottom-right
+        ]
+        
+        for px, py in petal_positions:
+            # Create decorative petal shapes
+            petal_size = dot_spacing * 0.8
             petal_path = dwg.path(
-                d=f"M {center_x} {center_y} "
-                  f"Q {x1} {y1} {x2} {y2} "
-                  f"Q {x3} {y3} {center_x} {center_y}",
+                d=f"M {px} {py-petal_size} "
+                  f"C {px+petal_size*0.5} {py-petal_size*1.2} "
+                  f"{px+petal_size*1.2} {py-petal_size*0.5} "
+                  f"{px+petal_size} {py} "
+                  f"C {px+petal_size*1.2} {py+petal_size*0.5} "
+                  f"{px+petal_size*0.5} {py+petal_size*1.2} "
+                  f"{px} {py+petal_size} "
+                  f"C {px-petal_size*0.5} {py+petal_size*1.2} "
+                  f"{px-petal_size*1.2} {py+petal_size*0.5} "
+                  f"{px-petal_size} {py} "
+                  f"C {px-petal_size*1.2} {py-petal_size*0.5} "
+                  f"{px-petal_size*0.5} {py-petal_size*1.2} "
+                  f"{px} {py-petal_size} Z",
                 stroke=self.traditional_colors['primary'],
                 stroke_width=2,
                 fill=self.traditional_colors['fill']
             )
             dwg.add(petal_path)
-        
-        # Outer ring patterns
-        outer_radius = size * 0.35
-        for i in range(12):
-            angle = (2 * math.pi * i) / 12
-            x = center_x + outer_radius * math.cos(angle)
-            y = center_y + outer_radius * math.sin(angle)
-            
-            # Decorative loops
-            loop_size = 15
-            loop_path = dwg.path(
-                d=f"M {x-loop_size} {y} "
-                  f"Q {x} {y-loop_size} {x+loop_size} {y} "
-                  f"Q {x} {y+loop_size} {x-loop_size} {y} Z",
-                stroke=self.traditional_colors['primary'],
-                stroke_width=2,
-                fill='none'
-            )
-            dwg.add(loop_path)
-            
-            # Connecting dots
-            dwg.add(dwg.circle(center=(x, y), r=3,
-                              fill=self.traditional_colors['dots']))
     
     def _generate_interlaced_diamond(self, dwg: svgwrite.Drawing, size: int):
         """Generate interlaced diamond pattern"""
@@ -563,6 +595,226 @@ class TraditionalFlowingKolamGenerator:
                 stroke_width=2,
                 fill='none'
             ))
+    
+    def _generate_traditional_interlaced_grid(self, dwg: svgwrite.Drawing, size: int):
+        """Generate traditional interlaced grid pattern matching reference designs"""
+        center_x = center_y = size // 2
+        
+        # Create 9x9 dot grid for complex interlacing
+        grid_size = 9
+        dot_spacing = size // 12
+        
+        # Place foundation dots
+        dots = []
+        for row in range(grid_size):
+            for col in range(grid_size):
+                x = center_x + (col - grid_size//2) * dot_spacing
+                y = center_y + (row - grid_size//2) * dot_spacing
+                dots.append((x, y))
+                dwg.add(dwg.circle(center=(x, y), r=2, fill=self.traditional_colors['dots']))
+        
+        # Create diagonal interlacing pattern
+        # Main diagonal loops
+        for offset in range(-3, 4):
+            if offset == 0:
+                continue
+            
+            # Primary diagonal
+            path_points = []
+            for i in range(grid_size - abs(offset)):
+                if offset > 0:
+                    row, col = i, i + offset
+                else:
+                    row, col = i - offset, i
+                
+                if 0 <= row < grid_size and 0 <= col < grid_size:
+                    x = center_x + (col - grid_size//2) * dot_spacing
+                    y = center_y + (row - grid_size//2) * dot_spacing
+                    path_points.append((x, y))
+            
+            # Create flowing path through diagonal points
+            if len(path_points) >= 2:
+                path_d = f"M {path_points[0][0]} {path_points[0][1]}"
+                
+                for i in range(1, len(path_points)):
+                    prev_x, prev_y = path_points[i-1]
+                    curr_x, curr_y = path_points[i]
+                    
+                    # Create loops around dots
+                    loop_size = dot_spacing * 0.4
+                    control_x = (prev_x + curr_x) / 2 + loop_size * (1 if offset % 2 == 0 else -1)
+                    control_y = (prev_y + curr_y) / 2 + loop_size * (1 if i % 2 == 0 else -1)
+                    
+                    path_d += f" Q {control_x} {control_y} {curr_x} {curr_y}"
+                
+                dwg.add(dwg.path(d=path_d, stroke=self.traditional_colors['primary'],
+                               stroke_width=3, fill='none'))
+        
+        # Add decorative corner elements
+        corner_positions = [
+            (center_x - 3*dot_spacing, center_y - 3*dot_spacing),
+            (center_x + 3*dot_spacing, center_y - 3*dot_spacing),
+            (center_x - 3*dot_spacing, center_y + 3*dot_spacing),
+            (center_x + 3*dot_spacing, center_y + 3*dot_spacing)
+        ]
+        
+        for cx, cy in corner_positions:
+            # Create traditional corner petal
+            petal_size = dot_spacing * 1.2
+            petal_path = dwg.path(
+                d=f"M {cx} {cy-petal_size} "
+                  f"Q {cx+petal_size*0.8} {cy-petal_size*0.2} {cx+petal_size} {cy} "
+                  f"Q {cx+petal_size*0.2} {cy+petal_size*0.8} {cx} {cy+petal_size} "
+                  f"Q {cx-petal_size*0.8} {cy+petal_size*0.2} {cx-petal_size} {cy} "
+                  f"Q {cx-petal_size*0.2} {cy-petal_size*0.8} {cx} {cy-petal_size} Z",
+                stroke=self.traditional_colors['primary'],
+                stroke_width=2,
+                fill=self.traditional_colors['fill']
+            )
+            dwg.add(petal_path)
+    
+    def _generate_flowing_lotus_petals(self, dwg: svgwrite.Drawing, size: int):
+        """Generate flowing lotus petal pattern"""
+        center_x = center_y = size // 2
+        
+        # Central dot
+        dwg.add(dwg.circle(center=(center_x, center_y), r=4, 
+                          fill=self.traditional_colors['dots']))
+        
+        # Create multiple petal rings
+        petal_rings = [
+            {'count': 8, 'radius': size * 0.12, 'size': 0.8},
+            {'count': 12, 'radius': size * 0.2, 'size': 1.0},
+            {'count': 16, 'radius': size * 0.32, 'size': 1.2}
+        ]
+        
+        for ring in petal_rings:
+            for i in range(ring['count']):
+                angle = (2 * math.pi * i) / ring['count']
+                
+                # Petal center position
+                px = center_x + ring['radius'] * math.cos(angle)
+                py = center_y + ring['radius'] * math.sin(angle)
+                
+                # Create flowing petal shape
+                petal_size = size * 0.03 * ring['size']
+                
+                # Petal oriented outward from center
+                petal_angle = angle + math.pi/2
+                
+                # Create smooth petal curve
+                p1_x = px + petal_size * math.cos(petal_angle - math.pi/3)
+                p1_y = py + petal_size * math.sin(petal_angle - math.pi/3)
+                
+                p2_x = px + petal_size * 1.5 * math.cos(petal_angle)
+                p2_y = py + petal_size * 1.5 * math.sin(petal_angle)
+                
+                p3_x = px + petal_size * math.cos(petal_angle + math.pi/3)
+                p3_y = py + petal_size * math.sin(petal_angle + math.pi/3)
+                
+                petal_path = dwg.path(
+                    d=f"M {px} {py} "
+                      f"C {p1_x} {p1_y} {p2_x} {p2_y} {p3_x} {p3_y} "
+                      f"Q {px + petal_size*0.5*math.cos(angle)} {py + petal_size*0.5*math.sin(angle)} {px} {py}",
+                    stroke=self.traditional_colors['primary'],
+                    stroke_width=2,
+                    fill=self.traditional_colors['fill'] if i % 2 == 0 else 'none'
+                )
+                dwg.add(petal_path)
+                
+                # Add connecting dots
+                dwg.add(dwg.circle(center=(px, py), r=2, 
+                                  fill=self.traditional_colors['dots']))
+        
+        # Add interlacing connections between rings
+        for i in range(8):
+            angle = (2 * math.pi * i) / 8
+            
+            start_radius = size * 0.12
+            end_radius = size * 0.32
+            
+            sx = center_x + start_radius * math.cos(angle)
+            sy = center_y + start_radius * math.sin(angle)
+            ex = center_x + end_radius * math.cos(angle)
+            ey = center_y + end_radius * math.sin(angle)
+            
+            # Curved connection
+            mid_angle = angle + math.pi/16
+            mid_radius = (start_radius + end_radius) / 2
+            mx = center_x + mid_radius * math.cos(mid_angle)
+            my = center_y + mid_radius * math.sin(mid_angle)
+            
+            connection = dwg.path(
+                d=f"M {sx} {sy} Q {mx} {my} {ex} {ey}",
+                stroke=self.traditional_colors['accent'],
+                stroke_width=2,
+                fill='none'
+            )
+            dwg.add(connection)
+    
+    def _generate_symmetrical_loops(self, dwg: svgwrite.Drawing, size: int):
+        """Generate symmetrical loop pattern like in reference image"""
+        center_x = center_y = size // 2
+        
+        # Create symmetrical loop structure
+        loop_radius = size * 0.25
+        
+        # Main symmetrical axes
+        axes = [0, math.pi/2, math.pi, 3*math.pi/2]  # 4-fold symmetry
+        
+        for axis in axes:
+            # Create loops along each axis
+            for distance in [0.6, 0.8, 1.0]:
+                loop_center_x = center_x + loop_radius * distance * math.cos(axis)
+                loop_center_y = center_y + loop_radius * distance * math.sin(axis)
+                
+                # Create flowing loop
+                loop_size = size * 0.04 * (1.2 - distance * 0.2)
+                
+                # Loop oriented perpendicular to axis
+                loop_angle = axis + math.pi/2
+                
+                # Create double loop pattern
+                for loop_offset in [-0.5, 0.5]:
+                    offset_x = loop_center_x + loop_size * loop_offset * math.cos(loop_angle)
+                    offset_y = loop_center_y + loop_size * loop_offset * math.sin(loop_angle)
+                    
+                    # Create elegant loop shape
+                    loop_path = dwg.path(
+                        d=f"M {offset_x - loop_size} {offset_y} "
+                          f"Q {offset_x} {offset_y - loop_size * 1.5} {offset_x + loop_size} {offset_y} "
+                          f"Q {offset_x} {offset_y + loop_size * 1.5} {offset_x - loop_size} {offset_y} "
+                          f"M {offset_x - loop_size * 0.3} {offset_y} "
+                          f"Q {offset_x} {offset_y - loop_size * 0.8} {offset_x + loop_size * 0.3} {offset_y} "
+                          f"Q {offset_x} {offset_y + loop_size * 0.8} {offset_x - loop_size * 0.3} {offset_y}",
+                        stroke=self.traditional_colors['primary'],
+                        stroke_width=2.5,
+                        fill='none'
+                    )
+                    dwg.add(loop_path)
+                    
+                    # Add center dot
+                    dwg.add(dwg.circle(center=(offset_x, offset_y), r=3,
+                                      fill=self.traditional_colors['dots']))
+        
+        # Add central connecting element
+        central_size = size * 0.08
+        central_element = dwg.path(
+            d=f"M {center_x - central_size} {center_y} "
+              f"Q {center_x} {center_y - central_size} {center_x + central_size} {center_y} "
+              f"Q {center_x} {center_y + central_size} {center_x - central_size} {center_y} "
+              f"M {center_x} {center_y - central_size} "
+              f"Q {center_x + central_size} {center_y} {center_x} {center_y + central_size} "
+              f"Q {center_x - central_size} {center_y} {center_x} {center_y - central_size}",
+            stroke=self.traditional_colors['accent'],
+            stroke_width=3,
+            fill='none'
+        )
+        dwg.add(central_element)
+        
+        # Central dot
+        dwg.add(dwg.circle(center=(center_x, center_y), r=4, 
+                          fill=self.traditional_colors['dots']))
 
 
 def generate_traditional_flowing_kolam_from_image(img_path: str, pattern_size: int = 400) -> str:

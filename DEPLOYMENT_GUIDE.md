@@ -7,12 +7,20 @@
 - Click Deploy
 - Copy your live site URL
 
-## 2. Backend (Render)
+## 2. Backend (Render) - Option A: Python Service
 - Go to https://dashboard.render.com/new/web-service
 - Connect your GitHub repo (SIH)
 - Set root directory to `backend`
-- Set start command: `python app.py`
+- Set start command: `gunicorn -b 0.0.0.0:$PORT app:app --workers 2 --timeout 120`
 - Ensure `requirements.txt` is present in `backend/`
+- Click Deploy
+- Copy your backend URL
+
+## 2. Backend (Render) - Option B: Docker Service  
+- Go to https://dashboard.render.com/new/web-service
+- Connect your GitHub repo (SIH)
+- Leave root directory blank (uses repository root)
+- Render will auto-detect the Dockerfile
 - Click Deploy
 - Copy your backend URL
 
