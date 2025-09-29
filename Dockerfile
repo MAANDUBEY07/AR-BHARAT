@@ -5,14 +5,8 @@ WORKDIR /app
 
 # Install system dependencies for OpenCV headless
 RUN apt-get update && apt-get install -y \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender1 \
-    libgomp1 \
     libgl1-mesa-glx \
-    libgthread-2.0-0 \
-    ffmpeg \
+    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install Python dependencies
