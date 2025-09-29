@@ -8,5 +8,8 @@ export default defineConfig({
       '/api': 'http://localhost:5000',
       '/storage': 'http://localhost:5000'
     }
+  },
+  define: {
+    'process.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL || 'https://ar-bharat-1.onrender.com')
   }
 })

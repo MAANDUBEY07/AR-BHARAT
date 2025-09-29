@@ -19,7 +19,8 @@ export default function UploadPage(){
     
     try {
       // Use selected precision mode for generation
-      const res = await axios.post('/api/kolam-from-image', fd, { timeout: 120000 });
+      const apiUrl = import.meta.env.PROD ? 'https://ar-bharat-1.onrender.com' : '';
+      const res = await axios.post(`${apiUrl}/api/kolam-from-image`, fd, { timeout: 120000 });
       
       setSvgSrc("data:image/svg+xml;utf8," + encodeURIComponent(res.data.svg));
       setPngSrc(null);
@@ -57,7 +58,8 @@ export default function UploadPage(){
         show_dots: true,
         artist: 'Web User'
       };
-      const res = await axios.post('/api/kolam-matlab', payload, {
+      const apiUrl = import.meta.env.PROD ? 'https://ar-bharat-1.onrender.com' : '';
+      const res = await axios.post(`${apiUrl}/api/kolam-matlab`, payload, {
         headers: { 'Content-Type': 'application/json' }
       });
       setMatlabSvg(res.data.svg);
