@@ -20,10 +20,10 @@ ENV QT_X11_NO_MITSHM=1
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Expose port
-EXPOSE 5000
+EXPOSE $PORT
 
 # Create storage directory
 RUN mkdir -p /app/backend/storage
 
 # Command to run the application
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "backend.app:app", "--workers", "2", "--timeout", "120"]
+CMD ["sh", "-c", "gunicorn -b 0.0.0.0:$PORT backend.app:app --workers 2 --timeout 120"]
