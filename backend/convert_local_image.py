@@ -20,14 +20,14 @@ def main():
 
     svg, meta = image_to_kolam_svg(
         image_bytes,
-        max_contours=10,
-        min_area=800,
+        max_contours=4,           # Fewer contours for Kolam clarity
+        min_area=200,             # Lower area to capture smaller details
         mode='vector',
-        thresh_block=31,
-        thresh_C=3,
-        retrieve_mode='tree',
-        resample_step=8,
-        smooth_alpha=0.8,
+        thresh_block=17,          # More sensitive thresholding
+        thresh_C=7,               # Higher C for noisy images
+        retrieve_mode='external', # Use external contours for Kolam
+        resample_step=3,          # More detail in curves
+        smooth_alpha=0.5,         # Less smoothing for sharper lines
     )
 
     out_path.write_text(svg, encoding='utf-8')

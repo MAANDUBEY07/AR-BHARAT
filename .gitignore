@@ -50,5 +50,10 @@ data/*.jpeg
 # But keep SVG files in data/kolams
 !data/kolams/*.svg
 
+# Environment variables
+.env
+.env.local
+.env.production
+
 # Zencoder specific
 .zencoder/rules/repo.md
