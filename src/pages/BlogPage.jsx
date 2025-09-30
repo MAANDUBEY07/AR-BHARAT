@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 export default function BlogPage() {
+  const navigate = useNavigate();
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -238,8 +240,7 @@ export default function BlogPage() {
               className="bg-white text-purple-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
               data-testid="read-full-article"
               onClick={() => {
-                // In future, this could open a modal or navigate to full article
-                window.open(`/api/blog/article/${featuredPost.id}`, '_blank');
+                navigate(`/blog/article/${featuredPost.id}`);
               }}
             >
               Read Full Article →
@@ -294,8 +295,7 @@ export default function BlogPage() {
                 whileHover={{ x: 5 }}
                 className="text-indigo-600 font-semibold text-sm cursor-pointer"
                 onClick={() => {
-                  // In future, this could open a modal or navigate to full article
-                  window.open(`/api/blog/article/${post.id}`, '_blank');
+                  navigate(`/blog/article/${post.id}`);
                 }}
                 data-testid="read-more-link"
               >

@@ -145,6 +145,7 @@ export default function ContactPage() {
                 <div>
                   <h4 className="font-semibold mb-1">Team Leader</h4>
                   <p className="text-white/90 font-medium">XITIZ RAJ</p>
+                  <p className="text-white/70 text-sm">xitizraj2004@gmail.com</p>
                 </div>
               </div>
 

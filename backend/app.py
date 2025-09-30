@@ -1353,41 +1353,118 @@ def get_blog_articles():
 def get_single_article(article_id):
     """Get a specific blog article with full content"""
     try:
-        # This would typically fetch from a database, but for real-time generation
-        # we'll generate content based on the article_id
+        # Enhanced topic mapping to handle dynamic IDs
         article_topics = {
             "article_1": {
                 "title": "The Digital Renaissance of Kolam Art Through AR",
                 "topic": "How augmented reality is revolutionizing traditional Kolam art forms and preserving Indian heritage for future generations",
-                "style": "storytelling"
+                "style": "storytelling",
+                "category": "Technology",
+                "imageUrl": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=400&fit=crop&auto=format&q=80"
             },
             "article_2": {
                 "title": "Mathematical Mysteries Hidden in Ancient Rangoli Patterns",
                 "topic": "Exploring the complex mathematical principles and geometric patterns found in traditional Rangoli designs across different Indian regions",
-                "style": "educational"
+                "style": "educational",
+                "category": "Cultural Heritage",
+                "imageUrl": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=400&fit=crop&auto=format&q=80"
             },
             "article_3": {
                 "title": "UNESCO's New Focus on Digital Heritage Preservation",
                 "topic": "How UNESCO and international organizations are embracing digital technologies to preserve cultural heritage sites and traditional art forms",
-                "style": "technical"
+                "style": "technical",
+                "category": "Global Heritage",
+                "imageUrl": "https://images.unsplash.com/photo-1565214975484-3cfa9e56f914?w=800&h=400&fit=crop&auto=format&q=80"
             }
         }
         
-        topic_data = article_topics.get(article_id)
+        # Handle dynamic article IDs by pattern matching
+        topic_data = None
+        if article_id in article_topics:
+            topic_data = article_topics[article_id]
+        elif "fresh_" in article_id:
+            # Parse dynamic ID and map to appropriate topic
+            if "_1" in article_id:
+                topic_data = {
+                    "title": "Digital Renaissance of Kolam Art",
+                    "topic": "Exploring how augmented reality is revolutionizing traditional Indian art forms and preserving cultural heritage for future generations through digital innovation",
+                    "style": "storytelling",
+                    "category": "Technology",
+                    "imageUrl": "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=400&fit=crop&auto=format&q=80"
+                }
+            elif "_2" in article_id:
+                topic_data = {
+                    "title": "Mathematical Beauty in Rangoli Patterns",
+                    "topic": "Discovering the complex geometric principles and mathematical foundations hidden in traditional Rangoli designs across different regions of India",
+                    "style": "educational",
+                    "category": "Cultural Heritage",
+                    "imageUrl": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=400&fit=crop&auto=format&q=80"
+                }
+            elif "_3" in article_id:
+                topic_data = {
+                    "title": "Immersive Heritage: AR Museums Revolution",
+                    "topic": "Experience how augmented reality is transforming museum visits across India, allowing visitors to interact with cultural artifacts in unprecedented ways",
+                    "style": "cultural",
+                    "category": "Digital Museums",
+                    "imageUrl": "https://images.unsplash.com/photo-1565214975484-3cfa9e56f914?w=800&h=400&fit=crop&auto=format&q=80"
+                }
+        elif "client_fallback_" in article_id:
+            # Handle frontend fallback IDs
+            if "_1" in article_id:
+                topic_data = {
+                    "title": "Virtual Kolam: Sacred Geometry in Digital Space",
+                    "topic": "Sacred geometry meets digital innovation as AR technology transforms traditional Kolam art for global accessibility and cultural preservation",
+                    "style": "storytelling",
+                    "category": "Cultural Technology",
+                    "imageUrl": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=400&fit=crop&auto=format&q=80"
+                }
+            elif "_2" in article_id:
+                topic_data = {
+                    "title": "Rangoli Patterns: Ancient Mathematics Revealed",
+                    "topic": "Ancient Rangoli designs reveal sophisticated mathematical principles that continue to inspire modern geometric art and digital pattern recognition",
+                    "style": "educational",
+                    "category": "Mathematical Heritage",
+                    "imageUrl": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=400&fit=crop&auto=format&q=80"
+                }
+        
         if not topic_data:
             return jsonify({'error': 'Article not found'}), 404
         
-        content = ar_bharat_chatbot.generate_blog_content(topic_data["topic"], topic_data["style"])
+        # Generate full content using AI
+        try:
+            content = ar_bharat_chatbot.generate_blog_content(topic_data["topic"], topic_data["style"])
+        except:
+            # Fallback content if AI fails
+            content = f"""
+            {topic_data['topic']}
+            
+            In this comprehensive exploration, we delve deep into the fascinating intersection of technology and cultural heritage. Our research reveals how modern digital innovations are revolutionizing the way we preserve, share, and experience traditional art forms.
+            
+            ## The Cultural Renaissance
+            
+            Traditional art forms like Kolam and Rangoli represent centuries of accumulated wisdom and mathematical sophistication. Through careful analysis and digital reconstruction, we're uncovering patterns and principles that were previously hidden from modern understanding.
+            
+            ## Technology as Cultural Bridge
+            
+            Augmented reality and machine learning technologies serve not as replacements for traditional practices, but as bridges connecting ancient wisdom with contemporary accessibility. This approach ensures cultural preservation while making these art forms accessible to global audiences.
+            
+            ## Future Implications
+            
+            The implications of this digital transformation extend far beyond simple digitization. We're witnessing the emergence of new forms of cultural expression that honor traditional roots while embracing innovative possibilities.
+            
+            Through continued research and development, we're building tools that serve both cultural preservation and educational outreach, ensuring that traditional art forms remain vibrant and relevant for future generations.
+            """
         
         article = {
             "id": article_id,
             "title": topic_data["title"],
             "content": content,
-            "date": "Jan 2025",
+            "date": datetime.utcnow().strftime("%b %Y"),
             "author": "AR BHARAT Editorial Team",
-            "category": "Technology & Heritage",
-            "tags": ["Indian Heritage", "AR Technology", "Cultural Preservation"],
+            "category": topic_data.get("category", "Technology & Heritage"),
+            "tags": ["Indian Heritage", "AR Technology", "Cultural Preservation", "Digital Innovation"],
             "readTime": f"{max(3, len(content.split())//200)} min read",
+            "imageUrl": topic_data.get("imageUrl", "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=400&fit=crop&auto=format&q=80"),
             "timestamp": datetime.utcnow().isoformat() + 'Z'
         }
         

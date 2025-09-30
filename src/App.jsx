@@ -6,6 +6,7 @@ import UploadPage from "./pages/UploadPage";
 import GalleryPage from "./pages/GalleryPage";
 import ARPage from "./pages/ARPage";
 import BlogPage from "./pages/BlogPage";
+import ArticlePage from "./pages/ArticlePage";
 import ContactPage from "./pages/ContactPage";
 import Header from "./components/Header";
 import Chatbot from "./components/Chatbot";
@@ -32,6 +33,7 @@ export default function App(){
             <Route path="/ar/:id" element={<ARPage />} />
             <Route path="/ar" element={<ARPage />} />
             <Route path="/blog" element={<BlogPage />} />
+            <Route path="/blog/article/:articleId" element={<ArticlePage />} />
             <Route path="/contact" element={<ContactPage />} />
           </Routes>
         </motion.div>
