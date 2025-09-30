@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "private": true,
+  "author": "Team Leader: XITIZ RAJ, Team: Piyush Kumar Pandey, Deepti Baghel, Maan Dubey, Pravalika K, Utsav Kanani",
   "scripts": {
     "dev": "vite",
     "build": "npx vite build",

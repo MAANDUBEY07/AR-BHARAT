@@ -37,5 +37,22 @@ A modular system to generate, explain, and showcase Kolam designs with AI, AR, a
 - Start dataset schema (SVG + JSON annotations by region, festival, symmetry).
 - Plan AR app prototype (Unity): render SVG->texture onto plane using ARFoundation.
 
+## 📞 Contact Information
+
+**Team Leader:** XITIZ RAJ
+
+**Team Members:**
+- Piyush Kumar Pandey ✉️ work.of.god02@gmail.com
+- Deepti Baghel ✉️ deepti.baghel912@gmail.com  
+- Maan Dubey ✉️ maan.dubey2006@gmail.com
+- Pravalika K ✉️ pravalikak15036@gmail.com
+- Utsav Kanani ✉️ utsavkanani9@gmail.com
+
+**🏫 Institute Address:**
+Sir M. Visvesvaraya Institute of Technology (SMVIT)  
+Krishnadevaraya Nagar, Hunasemaranahalli  
+Near Yelahanka, Bengaluru – 562157  
+Karnataka, India
+
 ## License
 MIT (add as needed)
