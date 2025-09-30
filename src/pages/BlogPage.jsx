@@ -74,13 +74,13 @@ export default function BlogPage() {
     }
   };
 
-  // Auto-refresh content every 5 minutes
+  // Auto-refresh content every 30 minutes
   useEffect(() => {
     fetchArticles();
     
     const refreshInterval = setInterval(() => {
       fetchArticles();
-    }, 5 * 60 * 1000); // 5 minutes
+    }, 30 * 60 * 1000); // 30 minutes
 
     return () => clearInterval(refreshInterval);
   }, []);
