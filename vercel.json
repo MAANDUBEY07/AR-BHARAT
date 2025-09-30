@@ -1,7 +1,8 @@
 {
   "version": 2,
+
   "framework": "vite", 
-  "installCommand": "npm install --legacy-peer-deps",
+  "installCommand": "rm -rf package-lock.json node_modules && npm install --legacy-peer-deps",
   "buildCommand": "npx vite build",
   "outputDirectory": "dist",
   "rewrites": [

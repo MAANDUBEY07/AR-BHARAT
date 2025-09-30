@@ -64,3 +64,4 @@ frontend/
 
 # Zencoder specific
 .zencoder/rules/repo.md
+.vercel
