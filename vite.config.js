@@ -11,5 +11,14 @@ export default defineConfig({
   },
   define: {
     'process.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL || 'https://ar-bharat-1.onrender.com')
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: undefined
+      }
+    }
   }
 })
