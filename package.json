@@ -5,13 +5,13 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "test": "playwright test",
-    "test:headed": "playwright test --headed",
-    "test:debug": "playwright test --debug",
-    "test:ar": "playwright test ar-integration.spec.js ar-webxr.spec.js ar-page-components.spec.js",
-    "test:report": "playwright show-report"
+    "build": "npx vite build",
+    "preview": "npx vite preview",
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "test:debug": "npx playwright test --debug",
+    "test:ar": "npx playwright test ar-integration.spec.js ar-webxr.spec.js ar-page-components.spec.js",
+    "test:report": "npx playwright show-report"
   },
   "engines": {
     "node": "22.x",
