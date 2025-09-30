@@ -9,6 +9,7 @@ export default function Header(){
   const navItems = [
     { path: "/upload", label: "Upload" },
     { path: "/gallery", label: "Gallery" },
+    { path: "/ar", label: "AR Experience" },
     { path: "/blog", label: "Blog" },
     { path: "/contact", label: "Contact" }
   ];
